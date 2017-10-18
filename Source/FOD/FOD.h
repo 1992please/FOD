@@ -4,3 +4,5 @@
 
 #include "CoreMinimal.h"
 
+#define OBJECTTYPE_Climbable ECC_GameTraceChannel2
+#define TRACETYPE_HeroTracer ECC_GameTraceChannel1
