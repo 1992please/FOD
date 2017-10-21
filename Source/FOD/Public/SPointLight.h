@@ -25,7 +25,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = DamageCurve)
 	float DamagePerSec;
-private:
+protected:
 	ASPointLight();
 
 	AHeroCharacter* DamagedPlayer;
@@ -41,8 +41,8 @@ private:
 	virtual void Tick(float DeltaSeconds) override;
 
 	//End of override
+	//virtual void ActivateShadow_Implementation(EShadowMode bMode) override;
 	virtual void ActivateShadow_Implementation(EShadowMode bMode) override;
-
 private:
 	float DamageTimer;
 	bool bCanDamage;

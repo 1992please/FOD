@@ -15,13 +15,12 @@ public:
 	// Sets default values for this actor's properties
 	ASStaticMesh();
 
+
 	virtual void ActivateShadow_Implementation(EShadowMode bMode) override;
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Mesh)
 	UStaticMeshComponent* NormalMesh;
 	UPROPERTY(VisibleAnywhere, Category = Mesh)
 	UStaticMeshComponent* ShadowMesh;
-
-	
-	
 };
