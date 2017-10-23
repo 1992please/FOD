@@ -20,38 +20,7 @@ const FName TraceTag("MyTraceTag");
 // Sets default values
 AHeroCharacter::AHeroCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-	
-
-	// set our turn rates for input
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
-
-	// Don't rotate when the controller rotates. Let that just affect the camera.
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 600.f;
-	GetCharacterMovement()->AirControl = 0.2f;
-
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UMyCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
+	// Variables initiations
 	b2DMode = false;
 	bTransitionCameraMode = false;
 	CameraSwitchTime = .2f;
@@ -66,6 +35,46 @@ AHeroCharacter::AHeroCharacter()
 	HangingOffset = -102;
 	BarkourState = EBarkourState::GroundedNormal;
 	bCanWallRun = true;
+	bStealthMode = false;
+	bJogPressed = false;
+	bFocusedPressed = false;
+	JogSpeed = 375;
+	RunSpeed = 200;
+	SneakSpeed = 160;
+
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	// Set size for collision capsule
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+
+
+	// set our turn rates for input
+	BaseTurnRate = 45.f;
+	BaseLookUpRate = 45.f;
+
+	// Don't rotate when the controller rotates. Let that just affect the camera.
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	// Configure character movement
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->JumpZVelocity = 600.f;
+	GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+	// Create a camera boom (pulls in towards the player if there is a collision)
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
+	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+
+	// Create a follow camera
+	FollowCamera = CreateDefaultSubobject<UMyCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+
 }
 
 // Called when the game starts or when spawned
@@ -130,11 +139,11 @@ void AHeroCharacter::Tick(float DeltaTime)
 
 	UpdateCameraPosition(DeltaTime);
 
-	UpdateFearTimer(DeltaTime);
+	//UpdateFearTimer(DeltaTime);
 
-	UpdateHealth(DeltaTime);
+	//UpdateHealth(DeltaTime);
 
-	UpdateTracers(DeltaTime);
+	//UpdateTracers(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -150,8 +159,15 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	InputComponent->BindAction("ShadowSwitch", IE_Pressed, this, &AHeroCharacter::EnterShadowWorld);
 	InputComponent->BindAction("ShadowSwitch", IE_Released, this, &AHeroCharacter::ExitShadowWorld);
 
-	InputComponent->BindAction("FocusedMood", IE_Pressed, this, &AHeroCharacter::FocusedModeOn);
-	InputComponent->BindAction("FocusedMood", IE_Released, this, &AHeroCharacter::FocusedModeOff);
+	InputComponent->BindAction("FocusedMode", IE_Pressed, this, &AHeroCharacter::FocusedModeOn);
+	InputComponent->BindAction("FocusedMode", IE_Released, this, &AHeroCharacter::FocusedModeOff);
+
+	InputComponent->BindAction("Jog", IE_Pressed, this, &AHeroCharacter::JogOn);
+	InputComponent->BindAction("Jog", IE_Released, this, &AHeroCharacter::JogOff);
+
+
+	InputComponent->BindAction("StealthMode", IE_Released, this, &AHeroCharacter::StealthSwitch);
+
 
 	InputComponent->BindAxis("MoveForward", this, &AHeroCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AHeroCharacter::MoveRight);
@@ -700,10 +716,52 @@ void AHeroCharacter::StopJumping()
 
 void AHeroCharacter::FocusedModeOn()
 {
-	bFocusedMode = true;
+	bFocusedPressed = true;
 }
 
 void AHeroCharacter::FocusedModeOff()
 {
-	bFocusedMode = false;
+	bFocusedPressed = false;
+}
+
+void AHeroCharacter::JogOn()
+{
+	bJogPressed = true;
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	if (MovementComp)
+	{
+		if (!bStealthMode)
+			MovementComp->MaxWalkSpeed = JogSpeed;
+	}
+}
+
+void AHeroCharacter::JogOff()
+{
+	bJogPressed = false;
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	if (MovementComp)
+	{
+		if (!bStealthMode)
+			MovementComp->MaxWalkSpeed = RunSpeed;
+	}
+}
+
+void AHeroCharacter::StealthSwitch()
+{
+	bStealthMode = !bStealthMode;
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	if (MovementComp)
+	{
+		if (bStealthMode)
+		{
+			MovementComp->MaxWalkSpeed = SneakSpeed;
+		}
+		else
+		{
+			if (bJogPressed)
+			{
+
+			}
+		}
+	}
 }

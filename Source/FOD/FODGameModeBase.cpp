@@ -25,7 +25,7 @@ void AFODGameModeBase::SwitchShadow(bool bShadowMode)
 			IShadowInterface* ShadowObject = Cast<IShadowInterface>(Actor);
 			if (ShadowObject && !Actor->IsPendingKill())
 			{
-				ShadowObject->ActivateShadow((EShadowMode)bShadowWorld);
+				ShadowObject->ActivateShadow_Implementation((EShadowMode)bShadowWorld);
 			}
 		}
 	}
@@ -35,4 +35,3 @@ bool AFODGameModeBase::IsShadowWorldActive() const
 {
 	return bShadowWorld;
 }
-

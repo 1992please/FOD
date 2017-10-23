@@ -46,12 +46,17 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UMyCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	float BaseTurnRate;
 
+	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	float BaseLookUpRate;
 
 protected:
 	virtual void BeginPlay() override;
 
-// -----------------------------------Player States ---------------------------//
+//-----------------------------------Player States---------------------------//
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Fear")
 	float FearImmunity;
@@ -69,6 +74,7 @@ protected:
 	float HealthRegenrationPerSecond;
 
 	float HealthTimer;
+
 private:
 	bool bDamaged;
 
@@ -128,22 +134,33 @@ protected:
 	// -----------------------MOVEMENT SYSTEM-----------------------------//
 public:
 	// to be called from the anim blueprint
-	UFUNCTION(BlueprintCallable, Category = Barkour)
+	UFUNCTION(BlueprintCallable, Category = "Movement System")
 	void SetBarkourState(EBarkourState NewState);
 
-	UFUNCTION(BlueprintPure, Category = Barkour)
-		EBarkourState GetBarkourState() const { return BarkourState; }
+	UFUNCTION(BlueprintPure, Category = "Movement System")
+	EBarkourState GetBarkourState() const { return BarkourState; }
+
+	UFUNCTION(BlueprintPure, Category = "Movement System")
+	bool GetFocusedPressed() const { return bFocusedPressed; }
+
+	UFUNCTION(BlueprintPure, Category = "Movement System")
+	bool GetStealthMode() const { return bStealthMode; }
+
+	UFUNCTION(BlueprintPure, Category = "Movement System")
+	bool GetJogPressed() const { return bJogPressed; }
 protected:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-	float BaseTurnRate;
-
-	UPROPERTY(EditDefaultsOnly, Category = Barkour)
+	UPROPERTY(EditDefaultsOnly, Category = "Movement System")
 	float HangingOffset;
 
-	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-	float BaseLookUpRate;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement System")
+	float JogSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement System")
+	float RunSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement System")
+	float SneakSpeed;
 
 	UPROPERTY(EditDefaultsOnly, Category = Barkour)
 	UAnimMontage* ClimbWallAnim;
@@ -164,13 +181,20 @@ protected:
 
 	void FocusedModeOff();
 
+	void JogOn();
+
+	void JogOff();
+
+	void StealthSwitch();
+
 private:
 	float WallRunningOldAltitude;
 	float WallRunningNewAltitude;
 	float WallRunningFactor;
 
-	bool bFocusedMode;
-
+	bool bFocusedPressed;
+	bool bJogPressed;
+	bool bStealthMode;
 
 
 	EBarkourState BarkourState;

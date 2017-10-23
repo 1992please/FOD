@@ -31,6 +31,5 @@ public:
 	/** React to a trigger volume activating this object. Return true if the reaction succeeds. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Shadow")
 	void ActivateShadow(EShadowMode bMode);
-	virtual void ActivateShadow_Implementation(EShadowMode bMode) = 0;
-
+	virtual void ActivateShadow_Implementation(EShadowMode bMode);
 };
